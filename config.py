@@ -1,13 +1,13 @@
 config = {
 
     # Dataset Selection
-    # Options: '10', '20', '50' for 10k, 20k, or 50k dataset
-    'dataset_size': '10',              
+    # Options: '10', '20', '50' for 10k, 20k, or 50k dataset (top ... passages of precedent)
+    'dataset': '10',              
 
-    # Train-Test-Validation Split Ratios
+    # Train-Test-Validation Split
     'train_test_val_split': {
         'train': 0.8,
-        'validation': 0.1,
+        'valid': 0.1,
         'test': 0.1
     },
 
