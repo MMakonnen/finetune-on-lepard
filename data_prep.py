@@ -5,7 +5,16 @@ import json
 
 
 def prep_contexts(contexts, cols_to_keep):
-    """Remove duplicates from contexts and keep specific columns."""
+    """
+    Remove duplicates and keep selected columns.
+    
+    Args:
+        contexts (DatasetDict): Input dataset.
+        cols_to_keep (list): Columns to retain.
+    
+    Returns:
+        Dataset: Processed dataset.
+    """
     df = contexts['train'].to_pandas()
     df = df.drop_duplicates().reset_index(drop=True)
     df = df[cols_to_keep]
@@ -13,7 +22,17 @@ def prep_contexts(contexts, cols_to_keep):
 
 
 def sample_data_with_all_passages(dataset, fraction, seed):
-    """Subsample data while ensuring all passage_ids are retained."""
+    """
+    Subsample dataset while keeping all passage IDs.
+    
+    Args:
+        dataset (Dataset): Input dataset.
+        fraction (float): Sample fraction.
+        seed (int): Random seed.
+    
+    Returns:
+        Dataset: Sampled dataset.
+    """
     df = dataset.to_pandas()
     df = df.groupby('passage_id', group_keys=False).apply(
         lambda x: x.sample(frac=fraction, random_state=seed)
@@ -22,45 +41,89 @@ def sample_data_with_all_passages(dataset, fraction, seed):
 
 
 def stratified_split(dataset, splits, stratify_col, seed):
-    """Split dataset into a DatasetDict with stratified 'train', 'validation', and 'test' subsets."""
+    """
+    Perform stratified dataset split.
+    
+    Args:
+        dataset (Dataset): Input dataset.
+        splits (dict): Train/validation/test split ratios.
+        stratify_col (str): Column for stratification.
+        seed (int): Random seed.
+    
+    Returns:
+        DatasetDict: Train, validation, and test splits.
+    """
+
     df = dataset.to_pandas()
     train_split, val_split, test_split = splits.values()
     remaining_split = val_split + test_split
 
-    # First split: train vs. temp (val + test)
-    train_df, temp_df = train_test_split(
+    # Initial split: train vs remaining (val + test)
+    train_df, remaining_df = train_test_split(
         df,
         test_size=remaining_split,
         stratify=df[stratify_col],
         random_state=seed
     )
 
-    # Second split: val vs. test
-    val_test_ratio = test_split / remaining_split
+    # Relative proportion of test in remaining data
+    test_ratio_in_remaining = test_split / remaining_split
+    
+    # Split remaining into validation and test
     val_df, test_df = train_test_split(
-        temp_df,
-        test_size=val_test_ratio,
-        stratify=temp_df[stratify_col],
+        remaining_df,
+        test_size=test_ratio_in_remaining,
+        stratify=remaining_df[stratify_col],
         random_state=seed
     )
-
-    # Convert DataFrames back to HF Datasets
-    train_dataset = Dataset.from_pandas(train_df.reset_index(drop=True))
-    val_dataset   = Dataset.from_pandas(val_df.reset_index(drop=True))
-    test_dataset  = Dataset.from_pandas(test_df.reset_index(drop=True))
-
-    # Return a DatasetDict with train/validation/test splits
+    
     return DatasetDict({
-        'train': train_dataset,
-        'valid': val_dataset,
-        'test': test_dataset
+        'train': Dataset.from_pandas(train_df.reset_index(drop=True)),
+        'valid': Dataset.from_pandas(val_df.reset_index(drop=True)),
+        'test': Dataset.from_pandas(test_df.reset_index(drop=True))
     })
+
+
+def generate_special_tokens(passage_ids, output_folder=None):
+    """
+    Map unique passage IDs to special tokens.
+    
+    Args:
+        passage_ids (list): Unique passage IDs.
+        output_folder (str, optional): Folder to save the mapping.
+    
+    Returns:
+        dict: Passage ID to token mapping.
+        list: Generated special tokens.
+    """
+    passage_ids = sorted(set(passage_ids))  # Ensure consistent order of unique passage IDs
+    
+    special_tokens = [f"<special_token_{i}>" for i in range(1, len(passage_ids) + 1)]
+    passage_to_token = dict(zip(passage_ids, special_tokens))
+    
+    if output_folder:
+        os.makedirs(output_folder, exist_ok=True)  # Create folder if it does not exist
+        output_path = os.path.join(output_folder, "passage_to_token.json")
+        with open(output_path, "w") as f:
+            json.dump(passage_to_token, f, indent=2)
+        print(f"JSON file saved to {output_path}")
+    
+    return passage_to_token, special_tokens
 
 
 def create_json_files(context_data_split, passage_to_token, output_folder, config, seed) -> None:
     """
-    Create minimal JSON files for train/validation/test. 
-    'context_data_split' is a Hugging Face DatasetDict with splits.
+    Generate JSON files for training, validation, and test datasets.
+
+    Args:
+        context_data_split (DatasetDict): A Hugging Face DatasetDict containing train, validation, and test splits.
+        passage_to_token (dict): Mapping of passage IDs to special tokens.
+        output_folder (str): Directory where JSON files will be saved.
+        config (dict): Configuration dictionary with dataset size, data usage fraction, and train-test-validation split ratios.
+        seed (int): Random seed for reproducibility.
+
+    Returns:
+        None: Saves JSON files with user-assistant message interactions.
     """
     os.makedirs(output_folder, exist_ok=True)
 
@@ -87,9 +150,9 @@ def create_json_files(context_data_split, passage_to_token, output_folder, confi
         all_messages = []
 
         # Build user-assistant messages
-        for _, row in df.iterrows():
-            passage_id = row['passage_id']
-            destination_context = row['destination_context']
+        for row in df.itertuples(index=False):
+            passage_id = row.passage_id
+            destination_context = row.destination_context
             user_content = (
                 f"{system_prompt} You are given the following legal context:\n"
                 f"<preceding context>{destination_context}</preceding context>\n\n"
