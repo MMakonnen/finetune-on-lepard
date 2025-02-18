@@ -3,6 +3,5 @@ notes.txt
 .DS_Store
 finetuning_data
 ref
-finetune_model.ipynb
 .vscode
 passage_special_token_map
