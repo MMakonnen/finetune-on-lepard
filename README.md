@@ -4,15 +4,20 @@ This repository contains code to **fine-tune a Llama3 model** on the ETHZ Euler 
 
 ---
 
-## **Current State**: Finetuning Dataset Creation Complete ✅
+## **Current State**: Fine-Tuning and Evaluation Implemented ✅
 
 **Recent Additions**:
 
+- Fine-tuning of the model is now implemented using `finetune_model.py`.
+- Model evaluation is also implemented in `eval_finetuned_model.py`.
 - To create the **finetuning dataset**, run `create_finetuning_dataset.py` after setting the desired **configuration** in `config.py`.
 
 ---
 
-## **Next Step**: Clean up and upload Model Training Code 🚀
+## **Next Step**: Deploying the Model on the ETHZ Euler Cluster 🚀
+
+- Code for deploying the model on the Euler cluster will be added next.
+- Minor fixes and cleanups are planned.
 
 ---
 
@@ -30,4 +35,20 @@ This repository contains code to **fine-tune a Llama3 model** on the ETHZ Euler 
 
    - Generates processed data in `finetuning_data/`.
 
-3. **Train the Model** (Coming Soon)
+3. **Fine-Tune the Model**
+
+   ```bash
+   python finetune_model.py
+   ```
+
+   - Trains the model using the prepared dataset.
+
+4. **Evaluate the Fine-Tuned Model**
+
+   ```bash
+   python eval_finetuned_model.py
+   ```
+
+   - Runs evaluation metrics to assess model performance.
+
+---
