@@ -4,20 +4,19 @@ This repository contains code to **fine-tune a Llama3 model** on the ETHZ Euler 
 
 ---
 
-## **Current State**: Fine-Tuning and Evaluation Implemented ✅
+## **Current State**: Full Pipeline Running on Euler ✅
 
 **Recent Additions**:
 
-- Fine-tuning of the model is now implemented using `finetune_model.py`.
-- Model evaluation is also implemented in `eval_finetuned_model.py`.
-- To create the **finetuning dataset**, run `create_finetuning_dataset.py` after setting the desired **configuration** in `config.py`.
+- The entire pipeline (**dataset creation → training → evaluation**) is now set up on the Euler cluster.
 
 ---
 
-## **Next Step**: Deploying the Model on the ETHZ Euler Cluster 🚀
+## **Next Step**: Training & Iteration on Euler 🚀
 
-- Code for deploying the model on the Euler cluster will be added next.
-- Minor fixes and cleanups are planned.
+- Running full training runs based on available compute.
+- Iterating on hyperparameters and model performance.
+- Further optimizations and cleanup.
 
 ---
 
@@ -25,30 +24,12 @@ This repository contains code to **fine-tune a Llama3 model** on the ETHZ Euler 
 
 1. **Configure Parameters**
 
-   - Edit `config.py` to specify dataset settings, train/validation/test splits, and other parameters.
+   - Edit `src/config.py` to specify dataset settings, train/validation/test splits, and other parameters.
 
-2. **Create Finetuning Dataset**
-
-   ```bash
-   python create_finetuning_dataset.py
-   ```
-
-   - Generates processed data in `finetuning_data/`.
-
-3. **Fine-Tune the Model**
-
-   ```bash
-   python finetune_model.py
-   ```
-
-   - Trains the model using the prepared dataset.
-
-4. **Evaluate the Fine-Tuned Model**
-
-   ```bash
-   python eval_finetuned_model.py
-   ```
-
-   - Runs evaluation metrics to assess model performance.
-
----
+2. **Run the Full Pipeline on Euler**
+   - **Submit jobs using the provided shell scripts:**
+     ```bash
+     sbatch euler_scripts/jobscript_create_data.sh
+     sbatch euler_scripts/jobscript_finetune_model.sh
+     sbatch euler_scripts/jobscript_eval_model.sh
+     ```
