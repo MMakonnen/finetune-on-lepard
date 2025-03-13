@@ -34,7 +34,7 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 # Define and set a chat template for the LLama3 model
 tokenizer = get_chat_template(
     tokenizer,
-    chat_template="llama-3.1",
+    chat_template=config["chat_template"],
 )
 
 
@@ -60,8 +60,11 @@ print(f"Added {len(special_tokens)} special tokens to the tokenizer.")
 model = FastLanguageModel.get_peft_model(
     model,
     r = config['lora_rank_approx'], # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
+    # target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+    #                   "gate_proj", "up_proj", "down_proj",
+    #                   "lm_head", "embed_tokens",],
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
-                      "gate_proj", "up_proj", "down_proj",],
+                      "gate_proj", "up_proj", "down_proj", "embed_tokens", "lm_head",],
     lora_alpha = 16,
     lora_dropout = 0, # Supports any, but = 0 is optimized
     bias = "none",    # Supports any, but = "none" is optimized
@@ -90,9 +93,9 @@ trainer = SFTTrainer(
         per_device_train_batch_size=config['per_device_train_batch_size'],
         gradient_accumulation_steps=config['gradient_accumulation_steps'],
         warmup_steps=5,
-        num_train_epochs=config['num_train_epochs'] if config.get('full_epoch', False) else 0,
-        max_steps=config['max_steps'] if not config.get('full_epoch', False) else 0,
-        learning_rate=2e-4,
+        num_train_epochs = config['num_train_epochs'] if config.get('full_epoch', False) else 0,
+        max_steps = config['max_steps'] if not config.get('full_epoch', False) else 0,
+        learning_rate=config['learning_rate'],
         fp16=not is_bfloat16_supported(),
         bf16=is_bfloat16_supported(),
         logging_steps=1,
@@ -100,7 +103,7 @@ trainer = SFTTrainer(
         weight_decay=0.01,
         lr_scheduler_type="linear",
         seed=config['seed'],
-        output_dir="outputs",
+        output_dir=config['checkpoint_path'],
         report_to=[],
     ),
 )
