@@ -4,6 +4,8 @@ from transformers import AutoTokenizer
 from unsloth import FastLanguageModel
 import os
 import json
+from unsloth.chat_templates import get_chat_template
+
 
 def get_special_token_predictions(model, tokenizer, context, special_tokens, top_k=10):
     """
@@ -43,17 +45,17 @@ def get_special_token_predictions(model, tokenizer, context, special_tokens, top
     return top_k_tokens, {token: prob.item() for token, prob in zip(special_tokens, probabilities)}
 
 
-def evaluate_model(model, tokenizer, test_data, special_tokens, random_seed, num_samples=None):
+def evaluate_model(model, tokenizer, test_data, special_tokens, random_seed, num_samples):
     """
     Evaluate model performance on test data.
 
     Args:
-        model: The fine-tuned language model
-        tokenizer: The tokenizer
-        test_data: Test dataset
-        special_tokens: List of special tokens
-        num_samples: Number of samples to evaluate (None for all samples)
-        random_seed: Seed for random sampling
+        model: The fine-tuned language model.
+        tokenizer: The tokenizer.
+        test_data: Test dataset.
+        special_tokens: List of special tokens.
+        num_samples: Number of samples to evaluate (None for all samples).
+        random_seed: Seed for random sampling.
     """
     top_1_correct = 0
     top_5_correct = 0
@@ -74,14 +76,24 @@ def evaluate_model(model, tokenizer, test_data, special_tokens, random_seed, num
         print(f"\nEvaluating on {num_samples} randomly sampled examples out of {len(test_data['messages'])} total samples")
 
     for item in test_messages:
-        # Extract context and ground truth
-        context = item[0]['content']
+
+        # Use the chat template to format the prompt
+        # Instead of using the raw user message, apply the chat template with add_generation_prompt=True.
+        # This appends the assistant marker (or any additional formatting) that the model saw during training.
+        formatted_prompt = tokenizer.apply_chat_template(
+            item,
+            add_generation_prompt=True,
+            tokenize=False
+        )
+
+        # Extract the ground truth special token from the assistant's message.
         ground_truth = item[1]['content'].strip()
 
-        # Get predictions
+        # Get predictions using the formatted prompt
         top_10_predictions, _ = get_special_token_predictions(
-            model, tokenizer, context, special_tokens, top_k=10
+            model, tokenizer, formatted_prompt, special_tokens, top_k=10
         )
+
 
         # Check accuracies
         if ground_truth == top_10_predictions[0]:
@@ -140,47 +152,52 @@ def save_finetuned_model(model, tokenizer, config, base_path="finetuned_models")
     return save_path
 
 
-
 def load_finetuned_model(model_path, config, max_seq_length=2048):
     """
     Load a fine-tuned model for evaluation.
 
     Args:
         model_path: Path to the saved model
+        config: Configuration dictionary
         max_seq_length: Maximum sequence length
 
     Returns:
         model, tokenizer
     """
-
-    # Load base model and tokenizer
-    base_model, tokenizer = FastLanguageModel.from_pretrained(
+    # Load the saved tokenizer directly
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    
+    # Set the chat template - must match the one used during training for consistent token prediction
+    tokenizer = get_chat_template(
+        tokenizer,
+        chat_template=config['chat_template'],
+    )
+    
+    # Load base model without passing tokenizer
+    base_model, _ = FastLanguageModel.from_pretrained(
         model_name=config["model"],
         max_seq_length=max_seq_length,
         dtype=None,  # Auto-detect
         load_in_4bit=True
     )
-
-    # Load saved tokenizer and get its vocabulary
-    saved_tokenizer = AutoTokenizer.from_pretrained(model_path)
-    new_tokens = list(set(saved_tokenizer.get_vocab().keys()) - set(tokenizer.get_vocab().keys()))
-
-    # Add the new tokens to current tokenizer
-    if new_tokens:
-        tokenizer.add_tokens(new_tokens)
-        base_model.resize_token_embeddings(len(tokenizer))
+    
+    # Resize token embeddings to match the tokenizer
+    base_model.resize_token_embeddings(len(tokenizer))
 
     # Load LoRA adapters
     model = FastLanguageModel.get_peft_model(
         base_model,
         r=config["lora_rank_approx"],
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                       "gate_proj", "up_proj", "down_proj"],
+        target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                        "gate_proj", "up_proj", "down_proj",
+                        "lm_head", "embed_tokens",],
         lora_alpha=16,
         lora_dropout=0,
         bias="none",
         use_gradient_checkpointing="unsloth",
-        random_state=config["seed"]
+        random_state=config["seed"],
+        use_rslora = False,
+        loftq_config = None,
     )
 
     # Load the trained weights
