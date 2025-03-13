@@ -23,30 +23,40 @@ config = {
     # - "unsloth/Meta-Llama-3.1-405B-bnb-4bit"
     "model": "unsloth/Meta-Llama-3.1-8B-bnb-4bit",
 
+    # path to where model checkpoints can be saved (can get large for many training steps, 
+    # hence for example move to temporary storage)
+    "checkpoint_path": "/cluster/scratch/mmakonnen/checkpoints_model",
+
     # LoRA settings
     # Controls trainable LoRA parameters; suggested values: 8, 16, 32, 64, 128
-    "lora_rank_approx": 16,
+    "lora_rank_approx": 128,
+
+    # set learning rate to be used for finetuning
+    "learning_rate": 2e-4,
 
     # Training mode
     # If True, runs for 'num_train_epochs'; otherwise, runs for 'max_steps'
-    "full_epoch": False,
+    "full_epoch": True,
 
     # Training duration
     "num_train_epochs": 1,  # Used if 'full_epoch' is True
-    "max_steps": 10,  # Used if 'full_epoch' is False
+    "max_steps": 5000,  # Used if 'full_epoch' is False
 
     # Training batch settings
-    "per_device_train_batch_size": 2,  # Increase if memory allows; affects speed and stability
+    "per_device_train_batch_size": 8,  # Increase if memory allows; affects speed and stability
     "gradient_accumulation_steps": 4,  # Higher values reduce VRAM usage by simulating larger batches
 
     # number of samples from test set to test (useful for faster iterations and sanity checks)
-    "num_samples_to_evaluate": 500, # None if want to eval all test samples
+    "num_samples_to_evaluate": None, # None if want to eval all test samples
 
     # train and test data to be used 
     # NOTE: first need to create these through create_finetuning_dataset script, hence first 
     # entry here does not matter until those datasets created
     "train_data": "train_10k_percent20_split811_seed42.json",
     "test_data": "test_10k_percent20_split811_seed42.json",
+
+    # set chat template
+    "chat_template": "llama-3.1",
 
     # model folder of finetuned model to be used for evaluation 
     # NOTE: first need to finetune model, hence first entry here does not matter until eval
