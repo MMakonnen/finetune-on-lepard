@@ -60,9 +60,6 @@ print(f"Added {len(special_tokens)} special tokens to the tokenizer.")
 model = FastLanguageModel.get_peft_model(
     model,
     r = config['lora_rank_approx'], # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
-    # target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
-    #                   "gate_proj", "up_proj", "down_proj",
-    #                   "lm_head", "embed_tokens",],
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
                       "gate_proj", "up_proj", "down_proj", "embed_tokens", "lm_head",],
     lora_alpha = 16,
