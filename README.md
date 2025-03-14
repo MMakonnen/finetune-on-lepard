@@ -32,15 +32,31 @@ Replace `your_euler_username` with your **Euler cluster account name** to ensure
 
 ### **2. Update Email for Job Notifications**
 
-Before running the scripts, open `euler_scripts/jobscript_finetune_model.sh` and `euler_scripts/jobscript_eval_model.sh`, then replace **ENTER_YOUR_MAIL_HERE** with your email address. This ensures that you receive updates when your job is queued and when it completes.
+Before running the scripts, open the following job scripts:
+
+- `euler_scripts/jobscript_create_data.sh`
+- `euler_scripts/jobscript_finetune_model.sh`
+- `euler_scripts/jobscript_eval_model.sh`
+
+Replace **ENTER_YOUR_MAIL_HERE** with your email address. This ensures that you receive notifications when your job starts, completes, or fails.
 
 ---
 
 ### **3. Adjust Compute Resource Allocation**
 
-Currently, the following resource allocation settings in the fine-tuning and evaluation job scripts serve as **placeholders**:
+Currently, the following resource allocation settings in the dataset creation, fine-tuning, and evaluation job scripts serve as **placeholders**:
 
-#### Fine-tuning (`jobscript_finetune_model.sh`):
+#### **Dataset Creation (`jobscript_create_data.sh`)**
+
+```bash
+#SBATCH --mem-per-cpu=30G
+#SBATCH --time=00:05:00
+```
+
+- Preparing the **full 10k dataset** with **30G CPU memory** took **about 3 minutes**.
+- Adjust CPU allocation depending on dataset size and processing speed requirements.
+
+#### **Fine-tuning (`jobscript_finetune_model.sh`)**
 
 ```bash
 #SBATCH --mem-per-cpu=80G
@@ -48,20 +64,18 @@ Currently, the following resource allocation settings in the fine-tuning and eva
 #SBATCH --time=18:00:00
 ```
 
-These values should be adjusted depending on the compute requirements of the task.
+- Fine-tuning the **8B Llama3 model** on **20% of the top 10k LePaRD dataset** took **~14 hours** with **80G CPU memory** and **70G GPU memory**.
 
-- As a guideline, fine-tuning the **8B Llama3 model** on **20% of the top 10k LePaRD dataset** required **~14 hours** with **80G CPU memory** and **70G GPU memory**.
-
-#### Evaluation (`jobscript_eval_model.sh`):
+#### **Evaluation (`jobscript_eval_model.sh`)**
 
 ```bash
 #SBATCH --mem-per-cpu=40G
 #SBATCH --gres=gpumem:38G
 ```
 
-- Evaluating the corresponding **test set (~41k samples)** took **~2.5 hours** using **40G CPU memory** and **38G GPU memory**.
+- Evaluating the **test set (~41k samples)** took **~2.5 hours** using **40G CPU memory** and **38G GPU memory**.
 
-Ensure that these values are updated according to the model size, dataset fraction, and available cluster resources.
+Ensure that these values are updated according to the dataset size, model type, and available cluster resources.
 
 ---
 
