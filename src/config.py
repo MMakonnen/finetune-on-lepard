@@ -53,13 +53,13 @@ config = {
     # train and test data to be used 
     # NOTE: first need to create these through create_finetuning_dataset script, hence first 
     # entry here does not matter until those datasets created
-    "train_data": "train_10k_percent20_split811_seed42.json",
-    "test_data": "test_10k_percent20_split811_seed42.json",
+    "train_data": "train_10k_percent100_split900505_seed42.json",
+    "test_data": "test_10k_percent100_split900505_seed42.json",
 
     # set chat template
     "chat_template": "llama-3.1",
 
     # model folder of finetuned model to be used for evaluation 
     # NOTE: first need to finetune model, hence first entry here does not matter until eval
-    "finetuned_model": "Meta-Llama-3.1-8B-bnb-4bit_10k_percent20_split811_seed42",
+    "finetuned_model": "Meta-Llama-3.1-8B-bnb-4bit_10k_percent100_split900505_seed42",
 }                       
