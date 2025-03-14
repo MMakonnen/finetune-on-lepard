@@ -8,13 +8,13 @@ config = {
 
     # Data Usage Fraction
     # Fraction of the complete dataset to use for faster iterations
-    "data_usage_fraction": 0.2,       
+    "data_usage_fraction": 1,       
 
     # Train-Test-Validation Split
     "train_test_val_split": {
-        "train": 0.8,
-        "valid": 0.1,
-        "test": 0.1
+        "train": 0.9,
+        "valid": 0.05,
+        "test": 0.05
     },
 
     # Model options (choose based on available compute)
@@ -25,7 +25,8 @@ config = {
 
     # path to where model checkpoints can be saved (can get large for many training steps, 
     # hence for example move to temporary storage)
-    "checkpoint_path": "/cluster/scratch/mmakonnen/checkpoints_model",
+    # NOTE: Replace 'your_euler_username' with your actual Euler cluster account
+    "checkpoint_path": "/cluster/scratch/your_euler_username/checkpoints_model",
 
     # LoRA settings
     # Controls trainable LoRA parameters; suggested values: 8, 16, 32, 64, 128
