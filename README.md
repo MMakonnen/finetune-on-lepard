@@ -16,9 +16,25 @@ The entire workflow is set up to run efficiently on Euler.
 
 Modify `src/config.py` to define key settings for dataset selection, data splits, model parameters, training configurations, and evaluation settings. The configuration file provides extensive flexibility, including options for dataset size, training mode (epoch-based or step-based), LoRA settings, batch sizes, and learning rates.
 
+#### **Update Checkpoint Path**
+
+Before running the fine-tuning pipeline, **update the checkpoint path** in `src/config.py`.
+
+Locate the following line:
+
+```python
+"checkpoint_path": "/cluster/scratch/your_euler_username/checkpoints_model",
+```
+
+Replace `your_euler_username` with your **Euler cluster account name** to ensure that model checkpoints are correctly saved during fine-tuning. If this is not updated, the pipeline may fail due to missing storage permissions.
+
+---
+
 ### **2. Update Email for Job Notifications**
 
 Before running the scripts, open `euler_scripts/jobscript_finetune_model.sh` and `euler_scripts/jobscript_eval_model.sh`, then replace **ENTER_YOUR_MAIL_HERE** with your email address. This ensures that you receive updates when your job is queued and when it completes.
+
+---
 
 ### **3. Adjust Compute Resource Allocation**
 
@@ -47,6 +63,8 @@ These values should be adjusted depending on the compute requirements of the tas
 
 Ensure that these values are updated according to the model size, dataset fraction, and available cluster resources.
 
+---
+
 ### **4. Run the Full Pipeline on Euler**
 
 Execute the following scripts to launch each step of the pipeline:
@@ -56,6 +74,8 @@ sbatch euler_scripts/jobscript_create_data.sh
 sbatch euler_scripts/jobscript_finetune_model.sh
 sbatch euler_scripts/jobscript_eval_model.sh
 ```
+
+---
 
 ### **5. Recommended Environment Setup**
 
