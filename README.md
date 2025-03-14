@@ -28,6 +28,15 @@ Locate the following line:
 
 Replace `your_euler_username` with your **Euler cluster account name** to ensure that model checkpoints are correctly saved during fine-tuning. If this is not updated, the pipeline may fail due to missing storage permissions.
 
+#### **Set Dataset and Model Paths**
+
+In `src/config.py`, the following fields must be correctly set after running the dataset creation step:
+
+- **`train_data` and `test_data`**: Once the dataset creation job has run successfully, navigate to the `finetune_datasets` folder in the project directory. Copy the exact filenames of the generated train and test data and update these fields accordingly.
+- **`finetuned_model`**: After running both dataset creation and model fine-tuning, update this field with the trained model path before running the evaluation script.
+
+Failure to set these fields correctly will result in missing file errors during training or evaluation.
+
 ---
 
 ### **2. Update Email for Job Notifications**
@@ -53,7 +62,7 @@ Currently, the following resource allocation settings in the dataset creation, f
 #SBATCH --time=00:05:00
 ```
 
-- Preparing the **full 10k dataset** with **30G CPU memory** took **about 3 minutes**.
+- Preparing the **full 10k dataset** with **30G CPU memory** took **about 2 minutes**.
 - Adjust CPU allocation depending on dataset size and processing speed requirements.
 
 #### **Fine-tuning (`jobscript_finetune_model.sh`)**
@@ -81,13 +90,15 @@ Ensure that these values are updated according to the dataset size, model type, 
 
 ### **4. Run the Full Pipeline on Euler**
 
-Execute the following scripts to launch each step of the pipeline:
+Make sure to run all `sbatch` commands from the **root directory** of the project folder (`finetune-on-lepard`).
 
 ```bash
 sbatch euler_scripts/jobscript_create_data.sh
 sbatch euler_scripts/jobscript_finetune_model.sh
 sbatch euler_scripts/jobscript_eval_model.sh
 ```
+
+**Logs for each step** (dataset creation, fine-tuning, and evaluation) will be created in the root directory. Check these logs to monitor progress or debug issues.
 
 ---
 
