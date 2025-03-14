@@ -132,7 +132,7 @@ def create_json_files(context_data_split, passage_to_token, output_folder, confi
     dataset_size = config['dataset']
     fraction_percentage = int(config['data_usage_fraction'] * 100)
     splits_dict = config['train_test_val_split']
-    split_str = "".join(str(int(v * 10)) for v in splits_dict.values())
+    split_str = "".join(str(int(v * 100)).zfill(2) for v in splits_dict.values())
     data_suffix = (
         f"{dataset_size}k_"
         f"percent{fraction_percentage}_"
