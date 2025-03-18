@@ -134,7 +134,6 @@ def save_finetuned_model(model, tokenizer, config, base_path="finetuned_models")
         f"seed{config['seed']}"
     )
 
-
     # Create model identifier
     model_identifier = (
         f"{os.path.basename(config['model'])}_"
