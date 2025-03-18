@@ -130,9 +130,10 @@ def save_finetuned_model(model, tokenizer, config, base_path="finetuned_models")
     data_suffix = (
         f"{config['dataset']}k_"
         f"percent{int(config['data_usage_fraction'] * 100)}_"
-        f"split{''.join(str(int(v * 10)) for v in config['train_test_val_split'].values())}_"
+        f"split{''.join(str(int(v * 100)).zfill(2) for v in config['train_test_val_split'].values())}_"
         f"seed{config['seed']}"
     )
+
 
     # Create model identifier
     model_identifier = (
