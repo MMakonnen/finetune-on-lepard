@@ -1,6 +1,8 @@
 # **finetune-on-lepard**
 
-This repository contains code to **fine-tune a Llama3 model** on the ETHZ Euler cluster for the **Legal Passage Retrieval Task** using the **LePaRD dataset**. The pipeline consists of three key steps:
+This repository contains code to **fine-tune a LLaMA 3 model** on the ETHZ Euler cluster for the **Legal Passage Retrieval Task** using the **LePaRD dataset**. It also includes a **DistilBERT baseline** for comparison.
+
+The pipeline consists of three key steps:
 
 1. **Dataset Creation**
 2. **Model Training**
@@ -87,7 +89,7 @@ Currently, the following resource allocation settings in the dataset creation, f
 #SBATCH --time=18:00:00
 ```
 
-- Fine-tuning the **8B Llama3 model** on **20% of the top 10k LePaRD dataset** took **~14 hours** with **80G CPU memory** and **70G GPU memory**.
+- Fine-tuning the **8B LLaMA 3 model** on **20% of the top 10k LePaRD dataset** took **~14 hours** with **80G CPU memory** and **70G GPU memory**.
 
 #### **Evaluation (`jobscript_eval_model.sh`)**
 
@@ -104,7 +106,7 @@ Ensure that these values are updated according to the dataset size, model type, 
 
 ### **5. Run the Full Pipeline on Euler**
 
-Make sure to run all `sbatch` commands from the **root directory** of the project folder (`finetune-on-lepard`).
+Make sure to run all `sbatch` commands from the **root directory** of the project folder (`finetune-on-lepard`):
 
 ```bash
 sbatch euler_scripts/jobscript_create_data.sh
@@ -113,3 +115,23 @@ sbatch euler_scripts/jobscript_eval_model.sh
 ```
 
 **Logs for each step** (dataset creation, fine-tuning, and evaluation) will be created in the root directory. Check these logs to monitor progress or debug issues.
+
+---
+
+### **6. DistilBERT Baseline Setup**
+
+In addition to LLaMA 3 fine-tuning, the repository now includes code to fine-tune a **DistilBERT model** as a **baseline** for the Legal Passage Retrieval task.
+
+- All related code is located in the `src_distilbert` folder.
+- Configuration for DistilBERT fine-tuning is defined in `src_distilbert/distilbert_config.py`.
+- Job scripts for running the DistilBERT pipeline on Euler are available in the `euler_scripts/distilbert` folder.
+- The structure and logic follow the same three steps as for LLaMA 3:
+  1. **Data creation**
+  2. **Fine-tuning**
+  3. **Evaluation**
+
+📌 _Extensive documentation for the DistilBERT setup will follow soon, but the process mirrors the LLaMA 3 pipeline._
+
+---
+
+Let me know if you'd like a Markdown table of contents or internal links added.
