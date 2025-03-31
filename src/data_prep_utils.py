@@ -112,6 +112,30 @@ def generate_special_tokens(passage_ids, output_folder=None):
     return passage_to_token, special_tokens
 
 
+def build_data_suffix(config):
+    """
+    Build a filename suffix from config parameters.
+
+    Format: "{dataset}k_percent{data_usage_percentage}_split{split_str}_seed{seed}"
+
+    Args:
+        config (dict): Must include:
+            - "dataset": Dataset size in thousands (e.g., "10" for 10k)
+            - "data_usage_fraction": Fraction of data used (float)
+            - "train_test_val_split": Dict of split ratios
+            - "seed": Random seed
+
+    Returns:
+        str: Suffix string, e.g., "10k_percent20_split811_seed42"
+    """
+    dataset_size = config['dataset']
+    fraction_percentage = int(config['data_usage_fraction'] * 100)
+    splits_dict = config['train_test_val_split']
+    split_str = "".join(str(int(v * 100)).zfill(2) for v in splits_dict.values())
+    data_suffix = f"{dataset_size}k_percent{fraction_percentage}_split{split_str}_seed{config['seed']}"
+    return data_suffix
+
+
 def create_json_files(context_data_split, passage_to_token, output_folder, config, seed) -> None:
     """
     Generate JSON files for training, validation, and test datasets.
@@ -129,16 +153,7 @@ def create_json_files(context_data_split, passage_to_token, output_folder, confi
     os.makedirs(output_folder, exist_ok=True)
 
     # Build naming suffix (e.g. "10k_percent20_split811_seed42")
-    dataset_size = config['dataset']
-    fraction_percentage = int(config['data_usage_fraction'] * 100)
-    splits_dict = config['train_test_val_split']
-    split_str = "".join(str(int(v * 100)).zfill(2) for v in splits_dict.values())
-    data_suffix = (
-        f"{dataset_size}k_"
-        f"percent{fraction_percentage}_"
-        f"split{split_str}_"
-        f"seed{seed}"
-    )
+    data_suffix = build_data_suffix(config)
 
     system_prompt = "You are a helpful legal assistant."
 
