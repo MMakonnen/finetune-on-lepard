@@ -2,6 +2,7 @@ __pycache__
 notes.txt
 .DS_Store
 finetuning_data
+finetuning_data_distilbert
 ref
 .vscode
 passage_special_token_map
