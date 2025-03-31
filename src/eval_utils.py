@@ -6,6 +6,9 @@ import os
 import json
 from unsloth.chat_templates import get_chat_template
 
+# local imports
+from data_prep_utils import build_data_suffix
+
 
 def get_special_token_predictions(model, tokenizer, context, special_tokens, top_k=10):
     """
@@ -127,12 +130,7 @@ def save_finetuned_model(model, tokenizer, config, base_path="finetuned_models")
         base_path: Base directory for saving models
     """
     # Create data suffix
-    data_suffix = (
-        f"{config['dataset']}k_"
-        f"percent{int(config['data_usage_fraction'] * 100)}_"
-        f"split{''.join(str(int(v * 100)).zfill(2) for v in config['train_test_val_split'].values())}_"
-        f"seed{config['seed']}"
-    )
+    data_suffix = build_data_suffix(config)
 
     # Create model identifier
     model_identifier = (
