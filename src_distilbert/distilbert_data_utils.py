@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 
-def load_data_csv(file_path, label_to_zero_index=None):
+def load_data_csv(file_path, text_col, label_to_zero_index=None):
     """
     Load data from a CSV file with optional label mapping.
     
@@ -15,7 +15,7 @@ def load_data_csv(file_path, label_to_zero_index=None):
     df = pd.read_csv(file_path)
     examples = []
     for _, row in df.iterrows():
-        input_text = str(row["destination_context"]).strip()
+        input_text = str(row[text_col]).strip()
         original_label = f"{row['passage_id']}"
         
         if label_to_zero_index is not None:
@@ -51,3 +51,15 @@ def load_special_token_map(json_path):
     zero_index_to_label = {v: k for k, v in label_to_zero_index.items()}
     
     return special_token_map, label_to_zero_index, zero_index_to_label
+
+
+def format_extended_example(example):
+    return {
+        'passage_id': example['passage_id'],
+        'input_text': (
+            f"<DEST COURT>{example['dest_court']}</DEST COURT> "
+            f"<SOURCE COURT>{example['source_court']}</SOURCE COURT> "
+            f"<SOURCE DATE>{example['source_date']}</SOURCE DATE> "
+            f"<DEST CONTEXT>{example['destination_context']}</DEST CONTEXT>"
+        )
+    }

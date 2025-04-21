@@ -26,13 +26,15 @@ if config.get("n_labels") is not None and config["n_labels"] != expected_n_label
     raise ValueError(f"Mismatch in number of labels: config['n_labels']={config['n_labels']} vs expected={expected_n_labels}")
 
 
+# changes depending on using enriched data or not
+text_column = "input_text" if config.get("use_enriched_context", False) else "destination_context"
+
 # Load test data
 print("Loading test data...")
-test_examples = load_data_csv(config["test_file"], label_to_zero_index)
+test_examples = load_data_csv(config["test_file"], text_column, label_to_zero_index)
 print(f"Loaded {len(test_examples)} training examples.")
 
 test_dataset = LegalClassificationDataset(test_examples, tokenizer)
-
 
 # Evaluate the model for top-1, top-5, and top-10 accuracy
 batch_size = config["per_device_train_batch_size"]

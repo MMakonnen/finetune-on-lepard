@@ -9,12 +9,14 @@ sys.path.append(parent_dir)
 # local imports
 from distilbert_config import config
 from src.utils import validate_config
-from src.data_prep_utils import prep_contexts, sample_data_with_all_passages, stratified_split
+from src.data_prep_utils import prep_contexts, sample_data_with_all_passages, stratified_split, build_data_suffix
+from distilbert_data_utils import format_extended_example
 
 
 # Display Configuration
 print("=== Configuration ===")
 print(f"Dataset: {config['dataset']}k")
+print(f"Extended data format: {config['use_enriched_context']}")
 print(f"Train split: {config['train_test_val_split']['train']}")
 print(f"Validation split: {config['train_test_val_split']['valid']}")
 print(f"Test split: {config['train_test_val_split']['test']}")
@@ -29,10 +31,21 @@ validate_config(config)
 file_name = f"top_{config['dataset']}000_data.csv.gz"
 contexts = load_dataset("rmahari/LePaRD", data_files=file_name)
 
+
 # Preprocess and Sample Subset of Contexts
-cols_to_keep = ['passage_id', 'destination_context']
+if config.get("use_enriched_context", False):
+    cols_to_keep = ['passage_id', 'destination_context', 'dest_court', 'source_date', 'source_court']
+else:
+    cols_to_keep = ['passage_id', 'destination_context']
 contexts = prep_contexts(contexts, cols_to_keep)
 contexts = sample_data_with_all_passages(contexts, config['data_usage_fraction'], config['seed'])
+
+
+# format data for extended format
+if config.get("use_enriched_context", False):
+    contexts = contexts.map(format_extended_example)
+    cols_to_drop = ["destination_context", "dest_court", "source_date", "source_court"]
+    contexts = contexts.remove_columns(cols_to_drop)
 
 # Stratified Split => Returns DatasetDict
 contexts = stratified_split(
@@ -42,21 +55,18 @@ contexts = stratified_split(
     seed=config['seed']
 )
 
-dataset_size = config["dataset"]  # e.g. "10" for 10k
-fraction_percentage = int(config["data_usage_fraction"] * 100)
-# To ensure a consistent order, we order the splits as train, valid, test:
-split_order = ["train", "valid", "test"]
-splits_dict = config["train_test_val_split"]
-split_str = "".join(str(int(splits_dict[k] * 100)).zfill(2) for k in split_order)
-data_suffix = f"{dataset_size}k_percent{fraction_percentage}_split{split_str}_seed{config['seed']}"
+data_suffix = build_data_suffix(config)
 
 # Create the folder if it doesn't exist
 output_dir = "finetuning_data_distilbert"
 
+# Add optional 'extended_' prefix to the filename if enriched format is used
+format_prefix = "extended_" if config.get("use_enriched_context", False) else ""
+
 # Build file names based on the naming suffix
-train_filename = os.path.join(output_dir, f"train_distilbert_{data_suffix}.csv")
-valid_filename = os.path.join(output_dir, f"valid_distilbert_{data_suffix}.csv")
-test_filename = os.path.join(output_dir, f"test_distilbert_{data_suffix}.csv")
+train_filename = os.path.join(output_dir, f"train_distilbert_{format_prefix}{data_suffix}.csv")
+valid_filename = os.path.join(output_dir, f"valid_distilbert_{format_prefix}{data_suffix}.csv")
+test_filename = os.path.join(output_dir, f"test_distilbert_{format_prefix}{data_suffix}.csv")
 
 # create folder if it doesnt exist already
 os.makedirs(output_dir, exist_ok=True)
