@@ -3,6 +3,14 @@ from sklearn.model_selection import train_test_split
 import os
 import json
 import numpy as np
+import sys
+
+# Add the parent directory to sys.path
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(parent_dir)
+
+# local imports
+from src_distilbert.distilbert_data_utils import format_extended_example
 
 
 def prep_contexts(contexts, cols_to_keep):
@@ -136,7 +144,8 @@ def build_data_suffix(config):
     return data_suffix
 
 
-def create_json_files(context_data_split, passage_to_token, output_folder, config, seed) -> None:
+
+def create_json_files(context_data_split, passage_to_token, output_folder, config) -> None:
     """
     Generate JSON files for training, validation, and test datasets.
 
@@ -155,7 +164,7 @@ def create_json_files(context_data_split, passage_to_token, output_folder, confi
     # Build naming suffix (e.g. "10k_percent20_split811_seed42")
     data_suffix = build_data_suffix(config)
 
-    system_prompt = "You are a helpful legal assistant."
+    system_prompt = "You are an expert legal-precedent selector."
 
     # Process each split if it exists
     for split in ['train', 'valid', 'test']:
@@ -167,14 +176,37 @@ def create_json_files(context_data_split, passage_to_token, output_folder, confi
 
         # Build user-assistant messages
         for row in df.itertuples(index=False):
-            passage_id = row.passage_id
-            destination_context = row.destination_context
+
+            if config.get("use_enriched_context", False):
+                example = {
+                    "passage_id": "placeholder",  # required by function signature but not used
+                    "dest_court": row.dest_court,
+                    "source_court": row.source_court,
+                    "source_date": row.source_date,
+                    "destination_context": row.destination_context,
+                }
+                enriched = format_extended_example(example)
+                payload = enriched["input_text"]
+
+                middle = (
+                    "You are given the following destination court, source court, "
+                    "source date and legal context:"
+                )
+            else:
+                # just wrap the bare context in a tag
+                payload = f"<preceding_context>{row.destination_context}</preceding_context>"
+                middle = "You are given the following legal context:"
+
+
+            # inject payload under a unified instruction
             user_content = (
-                f"{system_prompt} You are given the following legal context:\n"
-                f"<preceding context>{destination_context}</preceding context>\n\n"
+                f"{system_prompt}\n\n"
+                f"{middle}\n"
+                f"{payload}\n\n"
                 "Please respond with the corresponding special token."
             )
-            assistant_content = passage_to_token[passage_id]
+
+            assistant_content = passage_to_token[row.passage_id]
             all_messages.append([
                 {"role": "user", "content": user_content},
                 {"role": "assistant", "content": assistant_content}
@@ -182,7 +214,8 @@ def create_json_files(context_data_split, passage_to_token, output_folder, confi
 
         # Save JSON
         final_dict = {"messages": all_messages}
-        output_filename = f"{split}_{data_suffix}.json"
+        format_prefix = "extended_" if config.get("use_enriched_context", False) else ""
+        output_filename = f"{split}_{format_prefix}{data_suffix}.json"
         output_path = os.path.join(output_folder, output_filename)
         with open(output_path, "w") as f:
             json.dump(final_dict, f, indent=2)

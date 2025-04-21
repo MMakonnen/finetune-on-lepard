@@ -132,10 +132,13 @@ def save_finetuned_model(model, tokenizer, config, base_path="finetuned_models")
     # Create data suffix
     data_suffix = build_data_suffix(config)
 
+    # Add 'extended_' prefix to the suffix when using enriched context
+    format_prefix = "extended_" if config.get("use_enriched_context", False) else ""
+
     # Create model identifier
     model_identifier = (
         f"{os.path.basename(config['model'])}_"
-        f"{data_suffix}"
+        f"{format_prefix}{data_suffix}"
     )
 
     # Create full save path

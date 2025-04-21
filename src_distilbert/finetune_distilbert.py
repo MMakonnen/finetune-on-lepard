@@ -14,11 +14,8 @@ from distilbert_data_class import LegalClassificationDataset
 from distilbert_data_utils import load_data_csv, load_special_token_map
 from distilbert_train_eval_utils import train_model, evaluate_epoch
 
-
-# Set seed for reproducibility
 set_seed(config["seed"])
 
-# Build data_suffix using the config parameters
 data_suffix = build_data_suffix(config)
 
 # Load special token mapping
@@ -30,14 +27,15 @@ expected_n_labels = len(label_to_zero_index)
 if config.get("n_labels") is not None and config["n_labels"] != expected_n_labels:
     raise ValueError(f"Mismatch in number of labels: config['n_labels']={config['n_labels']} vs expected={expected_n_labels}")
 
-# Load training data with label mapping
+# changes depending on using enriched data or not
+text_column = "input_text" if config.get("use_enriched_context", False) else "destination_context"
+
 print("Loading training data...")
-train_examples = load_data_csv(config["train_file"], label_to_zero_index)
+train_examples = load_data_csv(config["train_file"], text_column, label_to_zero_index)
 print(f"Loaded {len(train_examples)} training examples.")
 
-# Load development data with same label mapping
 print("Loading development data...")
-dev_examples = load_data_csv(config["dev_file"], label_to_zero_index)
+dev_examples = load_data_csv(config["dev_file"], text_column, label_to_zero_index)
 print(f"Loaded {len(dev_examples)} development examples.")
 
 # Prepare tokenizer and datasets
@@ -57,10 +55,9 @@ print(f"Development set top-1 accuracy: {dev_accuracy:.4f}")
 # SAVE MODEL #
 # # # # # # # #
 
-# Create model identifier
+format_prefix = "extended_" if config.get("use_enriched_context", False) else ""
 model_identifier = (
-    f"{os.path.basename(config['model_name'])}_"
-    f"{data_suffix}"
+    f"{os.path.basename(config['model_name'])}_{format_prefix}{data_suffix}"
 )
 
 base_path = "finetuned_distilbert_models"
@@ -69,7 +66,6 @@ base_path = "finetuned_distilbert_models"
 save_path = os.path.join(base_path, model_identifier)
 os.makedirs(save_path, exist_ok=True)
 
-# Save model and tokenizer
 model.save_pretrained(save_path)
 tokenizer.save_pretrained(save_path)
 

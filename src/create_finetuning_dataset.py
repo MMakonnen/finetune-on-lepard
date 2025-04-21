@@ -14,6 +14,7 @@ from data_prep_utils import (
 # Display Configuration
 print("=== Configuration ===")
 print(f"Dataset: {config['dataset']}k")
+print(f"Extended data format: {config['use_enriched_context']}")
 print(f"Train split: {config['train_test_val_split']['train']}")
 print(f"Validation split: {config['train_test_val_split']['valid']}")
 print(f"Test split: {config['train_test_val_split']['test']}")
@@ -28,10 +29,15 @@ validate_config(config)
 file_name = f"top_{config['dataset']}000_data.csv.gz"
 contexts = load_dataset("rmahari/LePaRD", data_files=file_name)
 
+
 # Preprocess and Sample Subset of Contexts
-cols_to_keep = ['passage_id', 'destination_context']
+if config.get("use_enriched_context", False):
+    cols_to_keep = ['passage_id', 'destination_context', 'dest_court', 'source_date', 'source_court']
+else:
+    cols_to_keep = ['passage_id', 'destination_context']
 contexts = prep_contexts(contexts, cols_to_keep)
 contexts = sample_data_with_all_passages(contexts, config['data_usage_fraction'], config['seed'])
+
 
 # Stratified Split => Returns DatasetDict
 contexts = stratified_split(
@@ -77,4 +83,4 @@ passage_to_token, special_tokens = generate_special_tokens(passage_ids, output_f
 
 # Create JSON files and save them
 output_folder_data = "finetuning_data"
-create_json_files(contexts, passage_to_token, output_folder_data, config, config['seed'])
+create_json_files(contexts, passage_to_token, output_folder_data, config)
