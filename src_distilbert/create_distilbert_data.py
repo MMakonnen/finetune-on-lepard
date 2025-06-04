@@ -34,7 +34,8 @@ contexts = load_dataset("rmahari/LePaRD", data_files=file_name)
 
 # Preprocess and Sample Subset of Contexts
 if config.get("use_enriched_context", False):
-    cols_to_keep = ['passage_id', 'destination_context', 'dest_court', 'source_date', 'source_court']
+    # cols_to_keep = ['passage_id', 'destination_context', 'dest_court', 'source_date', 'source_court']
+    cols_to_keep = ['passage_id', 'destination_context', 'dest_court']
 else:
     cols_to_keep = ['passage_id', 'destination_context']
 contexts = prep_contexts(contexts, cols_to_keep)
@@ -44,7 +45,8 @@ contexts = sample_data_with_all_passages(contexts, config['data_usage_fraction']
 # format data for extended format
 if config.get("use_enriched_context", False):
     contexts = contexts.map(format_extended_example)
-    cols_to_drop = ["destination_context", "dest_court", "source_date", "source_court"]
+    # cols_to_drop = ["destination_context", "dest_court", "source_date", "source_court"]
+    cols_to_drop = ["destination_context", "dest_court"]
     contexts = contexts.remove_columns(cols_to_drop)
 
 # Stratified Split => Returns DatasetDict
