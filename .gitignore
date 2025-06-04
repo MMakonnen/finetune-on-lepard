@@ -3,6 +3,10 @@ notes.txt
 .DS_Store
 finetuning_data
 finetuning_data_distilbert
+finetuning_data_sbert
 ref
 .vscode
 passage_special_token_map
+TRAINED_MODELS
+passage_dict
+access_tokens
