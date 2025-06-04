@@ -53,13 +53,22 @@ def load_special_token_map(json_path):
     return special_token_map, label_to_zero_index, zero_index_to_label
 
 
+# def format_extended_example(example):
+#     return {
+#         'passage_id': example['passage_id'],
+#         'input_text': (
+#             f"<DEST COURT>{example['dest_court']}</DEST COURT> "
+#             f"<SOURCE COURT>{example['source_court']}</SOURCE COURT> "
+#             f"<SOURCE DATE>{example['source_date']}</SOURCE DATE> "
+#             f"<DEST CONTEXT>{example['destination_context']}</DEST CONTEXT>"
+#         )
+#     }
+
 def format_extended_example(example):
     return {
         'passage_id': example['passage_id'],
         'input_text': (
             f"<DEST COURT>{example['dest_court']}</DEST COURT> "
-            f"<SOURCE COURT>{example['source_court']}</SOURCE COURT> "
-            f"<SOURCE DATE>{example['source_date']}</SOURCE DATE> "
             f"<DEST CONTEXT>{example['destination_context']}</DEST CONTEXT>"
         )
     }

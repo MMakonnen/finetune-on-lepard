@@ -5,6 +5,9 @@ config = {
     # Dataset specification
     # Options: '10', '20', '50' corresponding to 10k, 20k, or 50k top passages
     "dataset": "10",
+
+    # Use additional legal metadata (source/destination court and source date) alongside context
+    "use_enriched_context": True,
     
     # Fraction of the dataset to use (for quick iterations, set <1 to use a subset)
     "data_usage_fraction": 1,
@@ -35,12 +38,11 @@ config = {
     
     # Paths to training and development (validation) data JSON files
     # These files should follow the expected format (see load_data function)
-    "train_file": "finetuning_data_distilbert/train_distilbert_10k_percent100_split900505_seed42.csv",
-    "dev_file": "finetuning_data_distilbert/valid_distilbert_10k_percent100_split900505_seed42.csv",
-    "test_file": "finetuning_data_distilbert/test_distilbert_10k_percent100_split900505_seed42.csv",
-
+    "train_file": "finetuning_data_distilbert/train_distilbert_extended_10k_percent100_split900505_seed42.csv",
+    "dev_file": "finetuning_data_distilbert/valid_distilbert_extended_10k_percent100_split900505_seed42.csv",
+    "test_file": "finetuning_data_distilbert/test_distilbert_extended_10k_percent100_split900505_seed42.csv",
 
     # model folder of finetuned distilbert model to be used for evaluation 
     # NOTE: first need to finetune distilbert model, hence entry here does not matter until eval
-    "finetuned_model": "distilbert-base-uncased_10k_percent100_split900505_seed42"
+    "finetuned_model": "distilbert-base-uncased_extended_10k_percent100_split900505_seed42"
 }
