@@ -10,3 +10,4 @@ passage_special_token_map
 TRAINED_MODELS
 passage_dict
 access_tokens
+.env
