@@ -4,7 +4,7 @@
 #SBATCH --gpus=1
 #SBATCH --mem-per-cpu=80G
 #SBATCH --gres=gpumem:70G
-#SBATCH --time=00:30:00
+#SBATCH --time=08:00:00
 #SBATCH --mail-type=BEGIN,END
 #SBATCH --mail-user="ENTER_YOUR_MAIL_HERE"
 

@@ -8,7 +8,7 @@
 
 module load stack/2024-06 cuda/12.4.1 eth_proxy
 source ~/miniconda3/etc/profile.d/conda.sh
-conda activate finetune-lpr-env
+conda activate lpr-ra
 
 # ...
 python src_distilbert/create_distilbert_data.py
