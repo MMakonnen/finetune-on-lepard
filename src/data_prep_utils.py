@@ -4,6 +4,8 @@ import os
 import json
 import numpy as np
 import sys
+import pandas as pd
+import ast
 
 # Add the parent directory to sys.path
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -174,29 +176,65 @@ def create_json_files(context_data_split, passage_to_token, output_folder, confi
         df = context_data_split[split].to_pandas()
         all_messages = []
 
+
         # Build user-assistant messages
         for row in df.itertuples(index=False):
 
             if config.get("use_enriched_context", False):
+                # --- parse judge_names to a Python list, robust to strings like "['A','B']" or NaN ---
+                raw_judges = getattr(row, "judge_names", None)
+                if pd.isna(raw_judges):
+                    judge_list = []
+                elif isinstance(raw_judges, (list, tuple)):
+                    judge_list = [str(x).strip() for x in raw_judges if str(x).strip()]
+                else:
+                    try:
+                        parsed = ast.literal_eval(str(raw_judges))
+                        judge_list = (
+                            [str(x).strip() for x in parsed if str(x).strip()]
+                            if isinstance(parsed, (list, tuple)) else
+                            ([str(parsed).strip()] if str(parsed).strip() else [])
+                        )
+                    except Exception:
+                        judge_list = [str(raw_judges).strip()] if str(raw_judges).strip() else []
+
                 example = {
-                    "passage_id": "placeholder",  # required by function signature but not used
-                    "dest_court": row.dest_court,
-                    "source_court": row.source_court,
-                    "source_date": row.source_date,
+                    "passage_id": "placeholder",  # not used by formatter downstream
                     "destination_context": row.destination_context,
+                    "judge_names": judge_list,    # <— ONLY new thing you need
                 }
+
                 enriched = format_extended_example(example)
                 payload = enriched["input_text"]
 
-                middle = (
-                    "You are given the following destination court, source court, "
-                    "source date and legal context:"
-                )
+                middle = "You are given the following legal context and the presiding judge(s):"
             else:
-                # just wrap the bare context in a tag
                 payload = f"<preceding_context>{row.destination_context}</preceding_context>"
                 middle = "You are given the following legal context:"
 
+
+        # # Build user-assistant messages
+        # for row in df.itertuples(index=False):
+
+        #     if config.get("use_enriched_context", False):
+        #         example = {
+        #             "passage_id": "placeholder",  # required by function signature but not used
+        #             "dest_court": row.dest_court,
+        #             "source_court": row.source_court,
+        #             "source_date": row.source_date,
+        #             "destination_context": row.destination_context,
+        #         }
+        #         enriched = format_extended_example(example)
+        #         payload = enriched["input_text"]
+
+        #         middle = (
+        #             "You are given the following destination court, source court, "
+        #             "source date and legal context:"
+        #         )
+        #     else:
+        #         # just wrap the bare context in a tag
+        #         payload = f"<preceding_context>{row.destination_context}</preceding_context>"
+        #         middle = "You are given the following legal context:"
 
             # inject payload under a unified instruction
             user_content = (
