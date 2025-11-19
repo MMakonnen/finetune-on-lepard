@@ -1,6 +1,12 @@
 # **finetune-on-lepard**
 
-This repository contains code to **fine-tune a LLaMA 3 model** on the ETHZ Euler cluster for the **Legal Passage Retrieval Task** using the **LePaRD dataset**. It also includes a **DistilBERT baseline** for comparison.
+This repository contains code for **Legal Passage Retrieval** — the task of retrieving relevant legal passages of precedent given a legal context — using the **LePaRD dataset** ([Mahari et al., 2024](https://aclanthology.org/2024.acl-long.532.pdf)).
+
+The codebase includes multiple approaches:
+- **LLaMA 3.1 8B fine-tuning** (language modeling approach with special tokens)
+- **DistilBERT baseline** (classification approach)
+- **Embedding-based retrieval** (e5-Mistral-7B and general embedding methods)
+- **Metadata integration** (judge names, court information, and other contextual features)
 
 The pipeline consists of three key steps:
 
@@ -131,6 +137,152 @@ In addition to LLaMA 3 fine-tuning, the repository now includes code to fine-tun
   3. **Evaluation**
 
 📌 _Extensive documentation for the DistilBERT setup will follow soon, but the process mirrors the LLaMA 3 pipeline._
+
+---
+
+## **7. Embedding-Based Retrieval (SBERT & e5-Mistral)**
+
+The repository includes code for **embedding-based retrieval approaches** using Sentence-BERT (SBERT) and the **e5-Mistral-7B model**.
+
+### **SBERT Implementation**
+
+- Code is located in the `src_sbert` folder
+- Configuration files:
+  - `src_sbert/sbert_config.py` — Standard SBERT configuration
+  - `src_sbert/sbert_config_e5.py` — e5-Mistral-7B specific configuration
+- Job scripts for running SBERT experiments are in `euler_scripts/sbert` and `euler_scripts/sbert_e5`
+- The pipeline follows the same three-step structure: data creation, fine-tuning, and evaluation
+
+### **e5-Mistral-7B Embedding Model**
+
+The e5-Mistral-7B model provides an alternative embedding-based approach to passage retrieval:
+
+- **Configuration**: `src_sbert/sbert_config_e5.py`
+- **Training**: `src_sbert/sbert_finetune_e5.py`
+- **Evaluation**: `src_sbert/sbert_eval_e5.py`
+- **Data creation**: `src_sbert/sbert_create_data.py`
+
+**Note**: Embedding-based approaches (including e5-Mistral) have shown substantially worse accuracy compared to classification-based methods. Results suggest that approaches leveraging target-passage classification outperform those relying purely on embeddings.
+
+---
+
+## **8. Metadata Scraping and Integration**
+
+### **Metadata Scraping Pipeline**
+
+The repository includes scripts for **scraping and enriching legal case metadata** from external sources:
+
+- **Location**: `meta_data_scraping/` folder
+- **Main scripts**:
+  - `scrape_meta_data.py` — Core scraping functionality
+  - `scrape_meta_data_hybrid.py` — Hybrid scraping approach
+  - `create_data_to_enrich.py` — Prepares data for enrichment
+- **Data storage**: Scraped metadata is stored in `meta_data_scraping/meta_judge_data/`
+
+The scraping pipeline enriches case entries with:
+- **Judge names** (scraped from CourtListener based on formatted citation strings)
+- **Court information** (destination court, source court)
+- **Temporal metadata** (source dates)
+
+### **Judge Metadata Integration**
+
+**Judge names** have been identified as the most promising metadata feature, consistently improving retrieval accuracy when integrated into the pipeline.
+
+**Current Implementation**:
+- Judge names are scraped from CourtListener for all cases in the dataset
+- The scraping ensures **complete coverage** across train/validation/test splits to avoid evaluation bias
+- Judge metadata is integrated into both training and evaluation pipelines
+- Data files with judge metadata are stored in `finetuning_data_judge/`
+
+**Important Considerations**:
+- ⚠️ **Label Leakage Prevention**: Only metadata available at retrieval time (e.g., destination court, judges) should be included. Source-related information (source court, source date) directly encodes information about the target passage and constitutes label leakage.
+- ⚠️ **Complete Coverage**: When adding external metadata, ensure it is consistently available for **all samples** in all splits (train/val/test), not just the training set. Partial coverage can silently bias evaluation results.
+
+**Job Scripts**:
+- `euler_scripts/meta_data_judges/jobscript_JUDGES_create_data.sh` — Creates enriched datasets with judge metadata
+- `euler_scripts/meta_data_judges/jobscript_JUDGES_scrape_data.sh` — Runs the scraping pipeline
+
+---
+
+## **9. Project Background & Key Insights**
+
+### **Research Context**
+
+This project investigates Legal Passage Retrieval using the LePaRD dataset. The baseline established in prior work showed that a **simple classification approach using DistilBERT** performed best. Building on this:
+
+1. **LLaMA 3.1 8B Approach**: We replaced DistilBERT with a larger Llama 3.1 8B model, reframing the task as a **language modeling problem**. The model's vocabulary was extended with 10k special tokens (representing the 10k precedent passages), and the model was fine-tuned to predict the correct special token for each context. This improved retrieval accuracy modestly (a few percentage points).
+
+2. **Embedding Approaches**: We tested embedding-based retrieval (e.g., using the e5-Mistral-7B model), but this yielded substantially worse accuracy compared to classification methods.
+
+3. **Metadata Integration**: Subsequent experiments focused on including metadata during training and retrieval (e.g., court of origin, judge names). The most successful extension was the **inclusion of judge names**, scraped from CourtListener, which consistently improved retrieval accuracy.
+
+### **Key Findings**
+
+- **Classification approaches** outperform embedding-based retrieval methods
+- **Larger models** (e.g., DistilBERT → Llama 3) improve performance slightly, but **architectural or data innovations** (e.g., metadata, judge embeddings) yield greater gains
+- Merely expanding existing dataset metadata provides minor improvements; **adding new, meaningful information** (e.g., judges, court hierarchy) is more impactful
+- Incorporating target passage representations offered no meaningful accuracy gain
+- **Top-10 retrieval accuracy** is a useful metric: improvements matter most in difficult cases where baseline models already perform well on easy ones
+
+### **Reference Results**
+
+| Model / Setting                           | Data              | Top-1  | Top-5  | Top-10 | Notes                                  |
+| ----------------------------------------- | ----------------- | ------ | ------ | ------ | -------------------------------------- |
+| DistilBERT (Classification, context only) | 10 k              | 0.3817 | 0.7159 | 0.8100 | baseline                               |
+| DistilBERT (+ DEST court metadata only)   | 10 k              | 0.3833 | 0.7189 | 0.8134 | minor gain                             |
+| Llama 3 (Classification, context only)    | 10 k              | 0.4061 | 0.7578 | 0.8490 | took ~130 h (80 GB GPU)                |
+| Llama 3 (20% subset, context only)        | 41 k test samples | 0.2884 | 0.5932 | 0.6969 | ~13 h train + 2 h eval                 |
+| Llama 3 (+ Judge metadata)                | same subset       | 0.3122 | 0.6398 | 0.7501 | judge info helps                       |
+| e5-Mistral-7B (embedding approach)        | 25% subset        | 0.1008 | 0.2864 | 0.3941 | direct embedding ranking; 30 h / epoch |
+
+### **Dataset Information**
+
+- Always use the **10k-passage version** of the LePaRD dataset: [https://huggingface.co/datasets/rmahari/LePaRD](https://huggingface.co/datasets/rmahari/LePaRD)
+- Note: The file labeled "train" actually contains the full dataset — it must be manually split into train, validation, and test sets
+- Standard splits: initially 80/10/10, later switched to **90/5/5** (seed 42)
+- Training: **1 epoch** for all runs
+- Always evaluate **Top-1, Top-5, Top-10 retrieval accuracy**
+
+### **Efficient Experimentation Tips**
+
+- Use **subsets (≈ 20–25%)** of the dataset for quick iteration — relative model performance trends are consistent with full-dataset results
+- To test new metadata ideas, start with **DistilBERT** (fast to train). Larger models like Llama 3 may extract richer signals, but DistilBERT suffices to test whether a concept is worth scaling up
+
+---
+
+## **10. Next Steps**
+
+The most promising direction for future work is **integrating judge embeddings into the retrieval pipeline in a more sophisticated way**:
+
+1. **Obtain judge embeddings** from Robert Mahari (available via coordination)
+2. **Explore modeling strategies** to integrate judge embeddings into the retrieval architecture beyond simple metadata inclusion
+3. **Train and evaluate** new approaches on the 20% subset for comparison
+
+The current implementation includes judge names as metadata, but there is significant potential to leverage **judge embeddings** (dense representations of judges) to further improve retrieval accuracy.
+
+---
+
+## **Important Notes for Future Development**
+
+### **Avoiding Label Leakage**
+
+Be meticulous about avoiding information leakage:
+- Only include features that are **actually available at retrieval time** (e.g., destination court, judges)
+- Treat any feature tied to the ground-truth passage (source-related information) as a red flag for potential leakage
+- Source court and source date directly encode information about the origin of the passage and reveal something about the label being predicted
+
+### **Consistent Data Coverage**
+
+When adding external metadata (judges, embeddings, etc.):
+- Double-check that it is consistently available for **all samples** in all splits, not just the training set
+- Partial coverage can quietly undermine conclusions, even if everything "looks fine" at first glance
+- Ensure that any enrichment (scraping, embeddings, metadata) is **aligned with the final train/val/test splits**
+
+### **Reproducibility**
+
+- Always record **seeds and hyperparameters** for reproducibility
+- Maintain consistent **train/val/test splits** across experiments
+- Document any changes to data preprocessing or enrichment pipelines
 
 ---
 
