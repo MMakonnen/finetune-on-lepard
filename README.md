@@ -175,9 +175,7 @@ The repository includes scripts for **scraping and enriching legal case metadata
 - **Location**: `meta_data_scraping/` folder
 - **Main scripts**:
   - `scrape_meta_data.py` — Core scraping functionality
-  - `scrape_meta_data_hybrid.py` — Hybrid scraping approach
   - `create_data_to_enrich.py` — Prepares data for enrichment
-- **Data storage**: Scraped metadata is stored in `meta_data_scraping/meta_judge_data/`
 
 The scraping pipeline enriches case entries with:
 - **Judge names** (scraped from CourtListener based on formatted citation strings)
@@ -192,7 +190,6 @@ The scraping pipeline enriches case entries with:
 - Judge names are scraped from CourtListener for all cases in the dataset
 - The scraping ensures **complete coverage** across train/validation/test splits to avoid evaluation bias
 - Judge metadata is integrated into both training and evaluation pipelines
-- Data files with judge metadata are stored in `finetuning_data_judge/`
 
 **Important Considerations**:
 - ⚠️ **Label Leakage Prevention**: Only metadata available at retrieval time (e.g., destination court, judges) should be included. Source-related information (source court, source date) directly encodes information about the target passage and constitutes label leakage.
@@ -283,7 +280,3 @@ When adding external metadata (judges, embeddings, etc.):
 - Always record **seeds and hyperparameters** for reproducibility
 - Maintain consistent **train/val/test splits** across experiments
 - Document any changes to data preprocessing or enrichment pipelines
-
----
-
-Let me know if you'd like a Markdown table of contents or internal links added.
