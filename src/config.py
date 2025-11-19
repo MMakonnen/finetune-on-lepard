@@ -4,17 +4,20 @@ config = {
     
     # Dataset Selection
     # Options: '10', '20', '50' for 10k, 20k, or 50k dataset (top passages of precedent)
-    "dataset": "10",       
+    "dataset": "10",
+
+    # Use additional legal metadata (source/destination court and source date) alongside context
+    "use_enriched_context": True,       
 
     # Data Usage Fraction
     # Fraction of the complete dataset to use for faster iterations
-    "data_usage_fraction": 1,       
+    "data_usage_fraction": 0.2,       
 
     # Train-Test-Validation Split
     "train_test_val_split": {
-        "train": 0.9,
-        "valid": 0.05,
-        "test": 0.05
+        "train": 0.8,
+        "valid": 0.1,
+        "test": 0.1
     },
 
     # Model options (choose based on available compute)
@@ -25,8 +28,7 @@ config = {
 
     # path to where model checkpoints can be saved (can get large for many training steps, 
     # hence for example move to temporary storage)
-    # NOTE: Replace 'your_euler_username' with your actual Euler cluster account
-    "checkpoint_path": "/cluster/scratch/your_euler_username/checkpoints_model",
+    "checkpoint_path": "/cluster/scratch/your_user/checkpoints_model",
 
     # LoRA settings
     # Controls trainable LoRA parameters; suggested values: 8, 16, 32, 64, 128
@@ -41,7 +43,7 @@ config = {
 
     # Training duration
     "num_train_epochs": 1,  # Used if 'full_epoch' is True
-    "max_steps": 5000,  # Used if 'full_epoch' is False
+    "max_steps": 10,  # Used if 'full_epoch' is False
 
     # Training batch settings
     "per_device_train_batch_size": 8,  # Increase if memory allows; affects speed and stability
@@ -53,13 +55,13 @@ config = {
     # train and test data to be used 
     # NOTE: first need to create these through create_finetuning_dataset script, hence first 
     # entry here does not matter until those datasets created
-    "train_data": "train_10k_percent100_split900505_seed42.json",
-    "test_data": "test_10k_percent100_split900505_seed42.json",
+    "train_data": "train_extended_10k_percent20_split801010_seed42.json",
+    "test_data": "test_extended_10k_percent20_split801010_seed42.json",
 
     # set chat template
     "chat_template": "llama-3.1",
 
     # model folder of finetuned model to be used for evaluation 
-    # NOTE: first need to finetune model, hence first entry here does not matter until eval
-    "finetuned_model": "Meta-Llama-3.1-8B-bnb-4bit_10k_percent100_split900505_seed42",
-}                       
+    # NOTE: first need to finetune model, hence entry here does not matter until eval
+    "finetuned_model": "Meta-Llama-3.1-8B-bnb-4bit_extended_10k_percent20_split801010_seed42",
+}
