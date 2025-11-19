@@ -64,11 +64,28 @@ def load_special_token_map(json_path):
 #         )
 #     }
 
+# def format_extended_example(example):
+#     return {
+#         'passage_id': example['passage_id'],
+#         'input_text': (
+#             f"<DEST COURT>{example['dest_court']}</DEST COURT> "
+#             f"<DEST CONTEXT>{example['destination_context']}</DEST CONTEXT>"
+#         )
+#     }
+
+# contexts and judge info only
 def format_extended_example(example):
+    """
+    Expect example to contain:
+      - passage_id (str/int)
+      - destination_context (str)
+      - judge_names (list[str])  # can be empty list
+    """
+    judges_str = ", ".join(example.get("judge_names", [])) if example.get("judge_names") else ""
     return {
-        'passage_id': example['passage_id'],
-        'input_text': (
-            f"<DEST COURT>{example['dest_court']}</DEST COURT> "
+        "passage_id": example["passage_id"],
+        "input_text": (
+            f"<JUDGES>{judges_str}</JUDGES> "
             f"<DEST CONTEXT>{example['destination_context']}</DEST CONTEXT>"
         )
     }
