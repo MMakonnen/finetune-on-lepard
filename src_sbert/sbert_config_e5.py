@@ -25,7 +25,7 @@ config = {
     },
 
     # Training duration
-    "num_train_epochs": 2,
+    "num_train_epochs": 1,
 
     # Directory to save trained model and checkpoints
     "save_path": "sbert_finetuned_model",
