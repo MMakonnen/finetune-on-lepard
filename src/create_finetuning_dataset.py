@@ -1,4 +1,17 @@
+# ADJUSTMENTS MADE FOR USING ALREADY CREATED ENRICHED META DATA,
+# places of changes indicated via "HERE"
+
 from datasets import load_dataset
+
+# HERE
+import pandas as pd
+import os, sys
+from datasets import Dataset, DatasetDict
+
+# HERE
+# Add the parent directory to sys.path
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(parent_dir)
 
 # Local imports
 from config import config
@@ -27,12 +40,36 @@ validate_config(config)
 
 # Load Dataset
 file_name = f"top_{config['dataset']}000_data.csv.gz"
-contexts = load_dataset("rmahari/LePaRD", data_files=file_name)
+contexts_hf = load_dataset("rmahari/LePaRD", data_files=file_name)
 
+# HERE
+# Read enriched judge meta from both train-scraped and test-scraped files
+# HERE
+# Read enriched judge meta from both train-scraped and test-scraped files
+paths_enriched = [
+    "meta_data_scraping/meta_judge_data/meta_judge_N_full_10k_percent20_split801010_seed42.csv",
+    "meta_data_scraping/meta_judge_data/meta_judge_N_test_not_in_scraped_full_10k_percent20_split801010_seed42.csv",
+]
+
+dfs = [pd.read_csv(p, usecols=["dest_cite", "judge_names"]) for p in paths_enriched]
+df_enriched = pd.concat(dfs, ignore_index=True)
+
+
+# HERE
+# Convert HF to pandas, merge judges on dest_cite (LEFT join to keep all base rows)
+df_base = contexts_hf["train"].to_pandas()
+df_merged = df_base.merge(df_enriched, on="dest_cite", how="left")
+
+# HERE
+# Back to HF format for the rest of the pipeline
+contexts = DatasetDict({
+    "train": Dataset.from_pandas(df_merged, preserve_index=False)
+})
 
 # Preprocess and Sample Subset of Contexts
 if config.get("use_enriched_context", False):
-    cols_to_keep = ['passage_id', 'destination_context', 'dest_court', 'source_date', 'source_court']
+    cols_to_keep = ['passage_id', 'destination_context', 'judge_names']
+    # cols_to_keep = ['passage_id', 'destination_context', 'dest_court', 'source_date', 'source_court']
 else:
     cols_to_keep = ['passage_id', 'destination_context']
 contexts = prep_contexts(contexts, cols_to_keep)
