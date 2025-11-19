@@ -1,13 +1,37 @@
-__pycache__
-notes.txt
-.DS_Store
-finetuning_data
-finetuning_data_distilbert
-finetuning_data_sbert
-ref
-.vscode
-passage_special_token_map
-TRAINED_MODELS
-passage_dict
-access_tokens
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment
 .env
+
+# IDE
+.vscode/
+.DS_Store
+
+# Data directories
+finetuning_data/
+finetuning_data_distilbert/
+finetuning_data_sbert/
+finetuning_data_judge/
+context_data/
+INTERMEDIATE_STORAGE/
+meta_data_scraping/meta_judge_data/
+
+# Model artifacts
+TRAINED_MODELS/
+passage_dict/
+passage_special_token_map/
+
+# Access tokens and secrets
+access_tokens/
+
+# Reference and notes
+ref/
+notes.txt
+
+# Temporary scripts (to be removed)
+scrape_meta_data_hybrid.py
+src_sbert/sbert_eval.py
