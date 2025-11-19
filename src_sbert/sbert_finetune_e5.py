@@ -1,23 +1,3 @@
-
-# TODO:
-# - 
-# - ask about hyperpar: 2 train epochs???, dont just use 1
-# - python version, what packages and versions to install...
-# - first test with subset of data
-# - inference script
-# - adjust text feeding in format
-# - solid reference: https://github.com/kamalkraj/e5-mistral-7b-instruct/blob/master/lora.json
-# - max seq length extend and test out -> ask domnik about this
-# - test on subset of the data, e.g. 25% and compare to prior performance
-# - potentially WANDB disable (os.environ["WANDB_DISABLED"] = "True")
-# - move some stuff into conda file
-# - later: make unified script for testing different models
-# - how do eval with test train val, we know correct passage and has to be able to tell this ...
-# - make file more modular + move more stuff in to config file, make it easier to split between models
-# - push everything to github
-# - share to euler cluster ...
-
-
 import os
 import sys
 import torch
@@ -68,7 +48,7 @@ os.makedirs(ckpt_dir, exist_ok=True)
 
 # Hyperparameters
 BATCH_SIZE    = config.get('batch_size', 4)
-NUM_EPOCHS    = config.get('num_train_epochs', 2)
+NUM_EPOCHS    = config.get('num_train_epochs', 1)
 LEARNING_RATE = config.get('learning_rate', 2e-5)
 WARMUP_RATIO  = config.get('warmup_ratio', 0.1)
 LORA_R        = config.get('lora_r', 32)
@@ -80,7 +60,7 @@ USE_BF16      = config.get('use_bf16', True)
 model_kwargs = {"torch_dtype":torch.bfloat16}
 model = SentenceTransformer(model_name, model_kwargs=model_kwargs)
 
-model.max_seq_length = 512 # POTENTIALLY ADJUST THIS ???, model can have larger !!!
+model.max_seq_length = 512 # POTENTIALLY ADJUST THIS
 
 
 # train split
