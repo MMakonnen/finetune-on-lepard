@@ -21,5 +21,6 @@ def get_ir_evaluator(dataset: Dataset, name: str) -> InformationRetrievalEvaluat
         relevant_docs=relevant_docs,
         name=name,
         show_progress_bar=True,
-        corpus_chunk_size=512
+        batch_size=128,
+        corpus_chunk_size=1024
     )
